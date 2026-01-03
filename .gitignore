@@ -1,0 +1,7 @@
+# Ignoruj klucze prywatne
+.env
+
+# Ignoruj foldery systemowe i bazy danych
+__pycache__/
+chroma_db_kp/
+.ipynb_checkpoints/
