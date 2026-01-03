@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-import time  # <--- NOWOŚĆ: Biblioteka do robienia przerw
+import time
 from dotenv import load_dotenv
 
 from langchain_community.document_loaders import PyPDFLoader
@@ -43,7 +43,7 @@ def clean_text(text):
     return text
 
 # ==========================================
-# 2. TWORZENIE BAZY DANYCH (Z NAPRAWIONYM BATCHINGIEM)
+# 2. TWORZENIE BAZY (WERSJA PANCERNA)
 # ==========================================
 def prepare_database():
     print(f"--- 1. Przetwarzanie pliku: {PDF_PATH} ---")
@@ -75,46 +75,49 @@ def prepare_database():
     splits = text_splitter.split_documents([cleaned_doc])
     print(f"   Utworzono {len(splits)} fragmentów.")
 
-    # --- NOWA LOGIKA: WYSYŁANIE PARTIAMI (BATCHING) ---
-    print(f"--- 2. Generowanie wektorów (z opóźnieniem dla darmowego limitu) ---")
+    # --- PANCERNA LOGIKA WYSYŁANIA ---
+    print(f"--- 2. Generowanie wektorów (Tryb bezpieczny) ---")
     embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
     
-    # Tworzymy pustą bazę na dysku
     vectorstore = Chroma(
         persist_directory=DB_PATH, 
         embedding_function=embeddings
     )
 
-    # Ustawienia batchowania
-    BATCH_SIZE = 5      # Przetwarzaj po 5 fragmentów na raz
-    SLEEP_TIME = 4      # Czekaj 4 sekundy między paczkami (bezpieczny margines)
+    # ZMIANA: Wysyłamy po 1 dokumencie, żeby kontrolować błędy
+    BATCH_SIZE = 1      
+    total = len(splits)
     
-    total_batches = len(splits) // BATCH_SIZE + 1
-    
-    print(f"   Rozpoczynam wysyłanie {len(splits)} fragmentów w paczkach po {BATCH_SIZE}...")
+    print(f"   Rozpoczynam wysyłanie {total} fragmentów...")
 
-    for i in range(0, len(splits), BATCH_SIZE):
-        batch = splits[i:i + BATCH_SIZE]
-        
-        # Pasek postępu w konsoli
-        current_batch = i // BATCH_SIZE + 1
-        print(f"   📤 Paczka {current_batch}/{total_batches} (fragmenty {i}-{min(i+BATCH_SIZE, len(splits))})... ", end="", flush=True)
-        
-        try:
-            # Dodaj dokumenty do bazy
-            vectorstore.add_documents(batch)
-            print("OK. Czekam...", end="", flush=True)
-            
-            # Pauza dla API Google (żeby nie dostać błędu 429)
-            time.sleep(SLEEP_TIME)
-            print(" ✅")
-            
-        except Exception as e:
-            print(f"\n❌ Błąd przy paczce {current_batch}: {e}")
-            print("Zatrzymuję proces. Spróbuj zwiększyć SLEEP_TIME.")
-            return None
+    for i, doc in enumerate(splits):
+        # Pętla nieskończona dla JEDNEGO dokumentu - dopóki nie przejdzie
+        while True:
+            try:
+                # Próba dodania
+                print(f"   📤 Fragment {i+1}/{total}... ", end="", flush=True)
+                vectorstore.add_documents([doc])
+                
+                # Sukces? Krótka przerwa i idziemy dalej
+                print("OK ✅")
+                time.sleep(1.5) # 1.5 sekundy przerwy między każdym zapytaniem
+                break 
 
-    print("✅ Baza danych utworzona pomyślnie!")
+            except Exception as e:
+                # Jeśli błąd zawiera "429" lub "ResourceExhausted"
+                error_msg = str(e)
+                if "429" in error_msg or "ResourceExhausted" in error_msg:
+                    print(f"\n   ⚠️ LIMIT PRZEKROCZONY (Błąd 429).")
+                    print("   💤 Czekam 60 sekund na reset licznika Google...")
+                    time.sleep(60)
+                    print("   🔄 Wznawiam próbę dla tego samego fragmentu...")
+                else:
+                    # Inny błąd (np. brak neta) - też czekamy, ale krócej
+                    print(f"\n   ❌ Inny błąd: {e}")
+                    print("   Czekam 10 sekund i próbuję ponownie...")
+                    time.sleep(10)
+
+    print("\n✅ Baza danych utworzona pomyślnie i zapisana!")
     return vectorstore
 
 # ==========================================
@@ -123,14 +126,10 @@ def prepare_database():
 def main():
     embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
     
-    # Sprawdzamy czy baza istnieje i ma pliki
     if os.path.exists(DB_PATH) and os.listdir(DB_PATH):
-        # Opcjonalne: Sprawdź czy baza nie jest pusta (np. po błędzie)
         try:
             vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=embeddings)
-            # Próbny odczyt, żeby zobaczyć czy działa
             if vectorstore._collection.count() == 0:
-                print("⚠️ Wykryto pustą bazę (poprzedni błąd?). Tworzę od nowa...")
                 vectorstore = prepare_database()
         except:
             vectorstore = prepare_database()
