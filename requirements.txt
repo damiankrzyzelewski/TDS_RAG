@@ -1,6 +1,17 @@
-langchain-google-genai
-langchain-chroma
-langchain-community
-pypdf
-chromadb
-python-dotenv
+# --- RDZEŃ LANGCHAIN ---
+langchain==0.2.3
+langchain-community==0.2.4
+langchain-core==0.2.5
+langchain-text-splitters==0.2.1
+
+# --- GOOGLE GEMINI ---
+langchain-google-genai==1.0.6
+
+# --- BAZA DANYCH (KLUCZOWE DLA TWOJEGO KODU) ---
+langchain-chroma==0.1.1
+chromadb==0.5.0
+
+# --- NARZĘDZIA ---
+pypdf==4.2.0
+python-dotenv==1.0.1
+streamlit==1.35.0
