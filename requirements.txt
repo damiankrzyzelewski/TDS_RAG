@@ -7,11 +7,18 @@ langchain-text-splitters==0.2.1
 # --- GOOGLE GEMINI ---
 langchain-google-genai==1.0.6
 
-# --- BAZA DANYCH (KLUCZOWE DLA TWOJEGO KODU) ---
+# --- BAZA DANYCH ---
 langchain-chroma==0.1.1
 chromadb==0.5.0
 
-# --- NARZĘDZIA ---
+# --- NARZĘDZIA PLIKOWE I KONFIGURACJA ---
 pypdf==4.2.0
 python-dotenv==1.0.1
+
+# --- GUI (OPCJONALNIE DLA STAREJ WERSJI) ---
 streamlit==1.35.0
+
+# --- BACKEND API (DLA REACTA) ---
+fastapi>=0.111.0
+uvicorn>=0.30.0
+pydantic>=2.7.0
