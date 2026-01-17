@@ -13,25 +13,25 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
-# --- KONFIGURACJA STRONY ---
+
 st.set_page_config(
     page_title="Asystent Prawa Pracy",
     page_icon="⚖️",
     layout="wide"
 )
 
-# --- ŁADOWANIE ZMIENNYCH ---
+
 load_dotenv()
 if not os.getenv("GOOGLE_API_KEY"):
-    st.error("❌ Brak klucza API w pliku .env")
+    st.error("Brak klucza API w pliku .env")
     st.stop()
 
 PDF_PATH = "Kodeks_pracy.pdf"
 DB_PATH = "./chroma_db_kp"
-EMBEDDING_MODEL = "models/gemini-embedding-001" # Wersja HD
+EMBEDDING_MODEL = "models/gemini-embedding-001"
 LLM_MODEL = "gemini-2.5-flash"
 
-# --- FUNKCJE POMOCNICZE ---
+
 def clean_text(text):
     lines = text.split('\n')
     cleaned_lines = []
@@ -43,7 +43,6 @@ def clean_text(text):
     text = '\n'.join(cleaned_lines)
     return re.sub(r'\n{3,}', '\n\n', text)
 
-# --- PANCERNA FUNKCJA BUDOWANIA BAZY (DLA GUI) ---
 def build_database_gui():
     status_text = st.empty()
     progress_bar = st.progress(0)
@@ -52,7 +51,7 @@ def build_database_gui():
         st.error(f"Brak pliku {PDF_PATH}")
         return None
 
-    status_text.text("📂 Ładowanie pliku PDF...")
+    status_text.text(" Ładowanie pliku PDF...")
     loader = PyPDFLoader(PDF_PATH)
     raw_pages = loader.load()
     
@@ -62,7 +61,7 @@ def build_database_gui():
     
     cleaned_doc = Document(page_content=full_text, metadata={"source": PDF_PATH})
 
-    status_text.text("✂️ Dzielenie na artykuły...")
+    status_text.text(" Dzielenie na artykuły...")
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=3000,
         chunk_overlap=300,
@@ -71,7 +70,7 @@ def build_database_gui():
     )
     splits = text_splitter.split_documents([cleaned_doc])
     
-    status_text.text(f"🚀 Rozpoczynam generowanie wektorów (Total: {len(splits)} fragmentów)...")
+    status_text.text(f" Rozpoczynam generowanie wektorów (Total: {len(splits)} fragmentów)...")
     
     embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
     vectorstore = Chroma(persist_directory=DB_PATH, embedding_function=embeddings)
@@ -93,20 +92,19 @@ def build_database_gui():
             except Exception as e:
                 error_msg = str(e)
                 if "429" in error_msg or "ResourceExhausted" in error_msg:
-                    status_text.warning(f"⚠️ Limit Google (429). Czekam 60s na reset...")
+                    status_text.warning(f" Limit Google (429). Czekam 60s na reset...")
                     time.sleep(60)
-                    status_text.text(f"🔄 Wznawiam...")
+                    status_text.text(f" Wznawiam...")
                 else:
                     status_text.error(f"Inny błąd: {e}. Czekam 10s...")
                     time.sleep(10)
     
-    status_text.success("✅ Baza danych gotowa!")
+    status_text.success(" Baza danych gotowa!")
     time.sleep(1)
     status_text.empty()
     progress_bar.empty()
     return vectorstore
 
-# --- INICJALIZACJA RAG (CACHOWANA) ---
 @st.cache_resource
 def get_rag_chain():
     embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
@@ -151,8 +149,8 @@ st.markdown(f"Model: **{LLM_MODEL}** | Baza: **{EMBEDDING_MODEL}**")
 
 # Sprawdzenie czy baza istnieje, jeśli nie -> przycisk budowania
 if not os.path.exists(DB_PATH) or not os.listdir(DB_PATH):
-    st.warning("⚠️ Nie wykryto bazy danych.")
-    if st.button("🏗️ Zbuduj bazę wiedzy (ok. 15 min)"):
+    st.warning(" Nie wykryto bazy danych.")
+    if st.button(" Zbuduj bazę wiedzy (ok. 15 min)"):
         with st.spinner("Praca w toku..."):
             build_database_gui()
             st.rerun() # Odśwież stronę po zakończeniu
@@ -165,7 +163,6 @@ if rag_chain is None:
     st.error("Błąd ładowania bazy. Spróbuj usunąć folder chroma_db_kp i odświeżyć stronę.")
     st.stop()
 
-# --- CZAT ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
