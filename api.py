@@ -7,7 +7,6 @@ import time
 from typing import List, Dict
 from dotenv import load_dotenv
 
-# --- Importy LangChain ---
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
@@ -17,7 +16,6 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
-# --- KONFIGURACJA ---
 load_dotenv()
 PDF_PATH = "Kodeks_pracy.pdf"
 DB_PATH = "./chroma_db_kp"
@@ -26,7 +24,6 @@ LLM_MODEL = "gemini-2.5-flash"
 
 app = FastAPI()
 
-# Zezwalamy Reactowi na łączenie się z Pythonem (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,12 +31,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Modele danych ---
 class QueryRequest(BaseModel):
     question: str
     chat_history: List[Dict[str, str]] = [] 
 
-# --- Funkcje pomocnicze ---
 def clean_text(text):
     lines = text.split('\n')
     cleaned = [l for l in lines if "Kancelaria Sejmu" not in l and not re.search(r'\d{4}-\d{2}-\d{2}', l) and not l.strip().isdigit()]
@@ -80,19 +75,17 @@ def build_database():
                     time.sleep(10)
     return True
 
-# --- INTELIGENTNY ROUTER PYTAŃ ---
 def get_standalone_question(chat_history, question):
-    # ZMIANA: Printy są PRZED sprawdzeniem if not chat_history
     print(f"\n{'='*40}", flush=True)
-    print(f"🔍 [DEBUG] Analiza pytania: '{question}'", flush=True)
-    print(f"📜 [DEBUG] Rozmiar historii: {len(chat_history)}", flush=True)
+    print(f"[DEBUG] Analiza pytania: '{question}'", flush=True)
+    print(f"[DEBUG] Rozmiar historii: {len(chat_history)}", flush=True)
 
     if not chat_history:
-        print("❌ [DEBUG] Brak historii -> Zwracam pytanie bez zmian.", flush=True)
+        print("[DEBUG] Brak historii -> Zwracam pytanie bez zmian.", flush=True)
         print(f"{'='*40}\n", flush=True)
         return question
 
-    print(f"✅ [DEBUG] Historia obecna. Uruchamiam LLM do kontekstu...", flush=True)
+    print(f"[DEBUG] Historia obecna. Uruchamiam LLM do kontekstu...", flush=True)
     
     history_text = "\n".join([f"{msg['role']}: {msg['content']}" for msg in chat_history[-4:]])
     
@@ -117,11 +110,9 @@ def get_standalone_question(chat_history, question):
     response = llm.invoke(prompt)
     
     standalone_q = response.content.strip()
-    print(f"🤖 [DEBUG] Decyzja AI (Pytanie do bazy): '{standalone_q}'", flush=True)
+    print(f"[DEBUG] Decyzja AI (Pytanie do bazy): '{standalone_q}'", flush=True)
     print(f"{'='*40}\n", flush=True)
     return standalone_q
-
-# --- ENDPOINTY API ---
 
 @app.get("/status")
 def check_status():
@@ -172,7 +163,6 @@ def ask_question(req: QueryRequest):
     
     sources = [doc.page_content.strip()[:300] + "..." for doc in context_docs]
 
-    # --- NOWOŚĆ: LOGIKA FORMATOWANIA ODPOWIEDZI ---
     final_answer = response
     
     if req.question.strip().lower() != final_question.strip().lower():
