@@ -13,13 +13,10 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
-# ==========================================
-# KONFIGURACJA
-# ==========================================
 load_dotenv()
 
 if not os.getenv("GOOGLE_API_KEY"):
-    print("❌ BŁĄD: Nie znaleziono klucza GOOGLE_API_KEY w pliku .env")
+    print("BŁĄD: Nie znaleziono klucza GOOGLE_API_KEY w pliku .env")
     sys.exit(1)
 
 PDF_PATH = "Kodeks_pracy.pdf"
@@ -27,9 +24,6 @@ DB_PATH = "./chroma_db_kp"
 EMBEDDING_MODEL = "models/gemini-embedding-001"
 LLM_MODEL = "gemini-2.5-flash" 
 
-# ==========================================
-# 1. FUNKCJA CZYSZCZĄCA
-# ==========================================
 def clean_text(text):
     lines = text.split('\n')
     cleaned_lines = []
@@ -42,14 +36,11 @@ def clean_text(text):
     text = re.sub(r'\n{3,}', '\n\n', text)
     return text
 
-# ==========================================
-# 2. TWORZENIE BAZY (WERSJA PANCERNA)
-# ==========================================
 def prepare_database():
     print(f"--- 1. Przetwarzanie pliku: {PDF_PATH} ---")
     
     if not os.path.exists(PDF_PATH):
-        print(f"❌ BŁĄD: Nie widzę pliku {PDF_PATH} w folderze!")
+        print(f"BŁĄD: Nie widzę pliku {PDF_PATH} w folderze!")
         return None
 
     # Ładowanie
@@ -75,7 +66,6 @@ def prepare_database():
     splits = text_splitter.split_documents([cleaned_doc])
     print(f"   Utworzono {len(splits)} fragmentów.")
 
-    # --- PANCERNA LOGIKA WYSYŁANIA ---
     print(f"--- 2. Generowanie wektorów (Tryb bezpieczny) ---")
     embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
     
@@ -95,11 +85,11 @@ def prepare_database():
         while True:
             try:
                 # Próba dodania
-                print(f"   📤 Fragment {i+1}/{total}... ", end="", flush=True)
+                print(f"   Fragment {i+1}/{total}... ", end="", flush=True)
                 vectorstore.add_documents([doc])
                 
                 # Sukces? Krótka przerwa i idziemy dalej
-                print("OK ✅")
+                print("OK")
                 time.sleep(1.5) # 1.5 sekundy przerwy między każdym zapytaniem
                 break 
 
@@ -107,22 +97,19 @@ def prepare_database():
                 # Jeśli błąd zawiera "429" lub "ResourceExhausted"
                 error_msg = str(e)
                 if "429" in error_msg or "ResourceExhausted" in error_msg:
-                    print(f"\n   ⚠️ LIMIT PRZEKROCZONY (Błąd 429).")
-                    print("   💤 Czekam 60 sekund na reset licznika Google...")
+                    print(f"\n   LIMIT PRZEKROCZONY (Błąd 429).")
+                    print("   Czekam 60 sekund na reset licznika Google...")
                     time.sleep(60)
-                    print("   🔄 Wznawiam próbę dla tego samego fragmentu...")
+                    print("   Wznawiam próbę dla tego samego fragmentu...")
                 else:
                     # Inny błąd (np. brak neta) - też czekamy, ale krócej
-                    print(f"\n   ❌ Inny błąd: {e}")
+                    print(f"\n   Inny błąd: {e}")
                     print("   Czekam 10 sekund i próbuję ponownie...")
                     time.sleep(10)
 
-    print("\n✅ Baza danych utworzona pomyślnie i zapisana!")
+    print("\nBaza danych utworzona pomyślnie i zapisana!")
     return vectorstore
 
-# ==========================================
-# 3. GŁÓWNA PĘTLA
-# ==========================================
 def main():
     embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
     
@@ -174,10 +161,10 @@ def main():
         query = input("\nTwoje pytanie (wpisz 'exit' by wyjść): ")
         if query.lower() in ['exit', 'quit']: break
         
-        print("⏳ Analizuję...")
+        print("Analizuję...")
         try:
             response = rag_chain.invoke({"input": query})
-            print(f"\n📝 ODPOWIEDŹ:\n{response['answer']}")
+            print(f"\n ODPOWIEDŹ:\n{response['answer']}")
         except Exception as e:
             print(f"Błąd: {e}")
 
