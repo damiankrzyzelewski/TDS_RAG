@@ -1,18 +1,18 @@
-# ⚖️ Asystent Prawa Pracy (RAG)
+# Asystent Prawa Pracy (RAG)
 
 Aplikacja wykorzystująca sztuczną inteligencję do analizy i interpretacji polskiego Kodeksu Pracy. Projekt działa w architekturze **Client-Server** (React + Python) i wykorzystuje technikę **RAG** (Retrieval-Augmented Generation), aby udzielać precyzyjnych odpowiedzi wraz z cytowaniem podstawy prawnej.
 
-## 🧠 Wykorzystane Modele AI
+## Wykorzystane Modele AI
 * **Wnioskowanie:** Google Gemini 2.5 Flash (model z procesem myślowym "Thinking").
-* **Wektoryzacja (Embeddings):** Google Gemini Embedding 001 (High-Definition, 3072 wymiary).
+* **Wektoryzacja (Embeddings):** Google Gemini Embedding 001.
 
-## 🏗️ Technologia
+## Technologia
 * **Backend:** Python 3.10+, FastAPI, Uvicorn, LangChain, ChromaDB.
 * **Frontend:** React, Vite, Node.js.
 
 ---
 
-## 🛠️ Wymagania wstępne
+## Wymagania wstępne
 
 Przed uruchomieniem upewnij się, że posiadasz:
 1.  **Python** (wersja 3.10 lub nowsza).
@@ -21,7 +21,7 @@ Przed uruchomieniem upewnij się, że posiadasz:
 
 ---
 
-## 🚀 Instalacja i Uruchomienie
+## Instalacja i Uruchomienie
 
 Projekt wymaga uruchomienia dwóch niezależnych procesów: serwera backendowego oraz interfejsu frontendowego.
 
@@ -41,7 +41,7 @@ Projekt wymaga uruchomienia dwóch niezależnych procesów: serwera backendowego
     ```bash
     uvicorn api:app --reload
     ```
-    ✅ *Backend powinien działać pod adresem: `http://127.0.0.1:8000`*
+   *Backend powinien działać pod adresem: `http://127.0.0.1:8000`*
 
 ### KROK 2: Konfiguracja Frontendu (Interfejs)
 
@@ -58,11 +58,11 @@ Projekt wymaga uruchomienia dwóch niezależnych procesów: serwera backendowego
     ```bash
     npm run dev
     ```
-    ✅ *Aplikacja otworzy się pod adresem: `http://localhost:5173`*
+   *Aplikacja otworzy się pod adresem: `http://localhost:5173`*
 
 ---
 
-## 📚 Pierwsze użycie (Budowanie Bazy Wiedzy)
+## Pierwsze użycie (Budowanie Bazy Wiedzy)
 
 1.  Otwórz aplikację w przeglądarce (`http://localhost:5173`).
 2.  Jeśli uruchamiasz projekt po raz pierwszy (lub usunąłeś folder bazy), zobaczysz komunikat o braku bazy i przycisk **"Zbuduj Bazę"**.
@@ -71,13 +71,13 @@ Projekt wymaga uruchomienia dwóch niezależnych procesów: serwera backendowego
     * Podziału na artykuły prawne.
     * Generowania wektorów (embeddingów).
 4.  **Czas trwania:** ok. 10-15 minut.
-    * *Uwaga:* Aplikacja posiada system "pancerny" – jeśli przekroczysz darmowy limit zapytań Google (błąd 429), backend automatycznie wstrzyma pracę na 60 sekund i wznowi ją samoczynnie.
+    * *Uwaga:* Aplikacja posiada zabezpieczenie – jeśli przekroczysz darmowy limit zapytań Google (błąd 429), backend automatycznie wstrzyma pracę na 60 sekund i wznowi ją samoczynnie.
 5.  Po zakończeniu procesu możesz rozpocząć czat z asystentem.
 
 ---
 
 
-## 📁 Struktura projektu
+## Struktura projektu
 
 * `api.py` – Główny kod serwera (FastAPI + LangChain).
 * `requirements.txt` – Lista wymaganych bibliotek Python.
