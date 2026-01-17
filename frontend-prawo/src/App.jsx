@@ -7,9 +7,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [dbReady, setDbReady] = useState(true)
   const [building, setBuilding] = useState(false)
-  
-  // === ZMIANA TUTAJ ===
-  // Ustawiamy 'false', żeby domyślnie było WYŁĄCZONE
+
   const [useContext, setUseContext] = useState(false)
 
   const chatEndRef = useRef(null)
